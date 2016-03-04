@@ -1,6 +1,7 @@
 import sys
 import socket
 import SocketServer
+import argparse
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
     """
@@ -36,6 +37,14 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
 
 if __name__ == "__main__":
+    #parse args
+    parser = argparse.ArgumentParser(description='parser test')
+    parser.add_argument('-p', '--port', help="port number of receiving host", dest='port', type=int, required=True)
+    parser.add_argument('-a', '--address', help="hostname or IPV4 address of receiving host", dest='addr', type=str, required=True)
+
+    args = parser.parse_args()
+    
+
 	# KT: how do we get the desired host/port?
     # HOST, PORT = "localhost", 9999
 
