@@ -25,17 +25,15 @@ def main():
         # This should be recipient (Mallory's) host/port
         sock.connect((args.addr, args.port))
         while True:
-            msg = raw_input("Please input message here: ")
-            sock.sendall(msg + "\n")
-
+            msg = raw_input("Please input message here (empty string to quit): ")
+            sock.sendall(msg.strip() + "\n")
+            if msg == "":
+		break
+	print "Quitting"
             
-        # KT: I don't think we need this for Alice
-        # # Receive data from the server and shut down
-        # received = sock.recv(1024)
     finally:
         sock.close()
 
-    print "Sent:     {}".format(data)
     #print "Received: {}".format(received)
 
 
