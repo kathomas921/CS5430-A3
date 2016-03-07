@@ -1,7 +1,8 @@
 import sys
 import socket
 import SocketServer
-
+import json
+from message_handling import getErrorForCode, handleMessage
 class MyTCPHandler(SocketServer.StreamRequestHandler):
     """
     The request handler class for our server.
@@ -12,60 +13,25 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
     """
 
     def handle(self):
-        # self.rfile is a file-like object created by the handler;
-        # we can now use e.g. readline() instead of raw recv() calls
         data = "DUMMY"
-        size = 0
         peer = self.client_address[0]
         print "Client connected {}".format(peer)
         while data != "":
             data = self.rfile.readline().strip()
             try:
 		if data != "":
-	                print "{} writes: ".format(peer) + data
-	                size = size + len(data)
+                    message = handleMessage(data)
+                    if type(message) == type(1):
+                        err = getErrorForCode(message)
+                        print err
+                    else:  
+	                print "{} writes: ".format(peer) + str(message['message_number']) + ". " + message['message']
             except socket.error: # Client went away, do not take that data into account
                 data = ""
 	print "Client disconnected."
 
 if __name__ == "__main__":
-	# KT: how do we get the desired host/port?
-    # HOST, PORT = "localhost", 9999
-
-    # Create the server, binding to localhost on port 9999
     server = SocketServer.TCPServer(('localhost', 9997), MyTCPHandler)
-
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
     server.serve_forever()
 
-
-
-# def Bob:
-# 	try:
-# 		serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# 	except socket.error:
-# 		print 'Failed to create socket'
-# 		sys.exit()
-# 	print 'Bob created a server socket'
-	
-# 		# How does Alice know mallory's ip/port?
-# 		serversocket.bind("bob's ip", "bob's port")
-# 		#should this be >1 if he only ever listens for Alice or Mallory at once?
-# 		serversocket.listen(1)
-
-
-
-# 	while True:
-# 		# accept connections from outside (alice)
-# 		(clientsocket, address) = serversocket.accept()
-# 		msg = ""
-# 		msg_len = 0
-# 		while msg_len != 0:
-# 			chunk = serversocket.recv()
-# 			msg_len = len(chunk)
-# 			msg.append(chunk)
-
-
-# 		print msg
 

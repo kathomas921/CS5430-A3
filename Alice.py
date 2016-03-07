@@ -1,9 +1,18 @@
 import socket
 import sys
 import argparse
+import json
+import signal
+from Message import Message
 
 
-def main():
+def signal_handler(signal,frame):
+    global sock
+    print "\n\nEncountered SIGINT, closing socket.\n\n"
+    sock.close()
+    sys.exit(0)
+
+if __name__ == "__main__":
     #parse args
     parser = argparse.ArgumentParser(description='parser test')
     parser.add_argument('-p', '--port', help="port number of receiving host", dest='port', type=int, required=True)
@@ -19,27 +28,27 @@ def main():
 
     # Create a socket (SOCK_STREAM means a TCP socket)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+    signal.signal(signal.SIGINT, signal_handler)
+    MSG_COUNT = 0
     try:
         # Connect to server and send data
         # This should be recipient (Mallory's) host/port
         sock.connect((args.addr, args.port))
         while True:
-            msg = raw_input("Please input message here (empty string to quit): ")
-            sock.sendall(msg.strip() + "\n")
+            msg = raw_input("Message (empty string to quit): ")
             if msg == "":
+                sock.sendall(msg + "\n")
 		break
+            msgn = MSG_COUNT + 1
+            message = {'message_number': msgn, 'message': msg.strip()}
+            message_str = json.dumps(message)
+            sock.sendall(message_str + "\n")
+            MSG_COUNT += 1
 	print "Quitting"
             
     finally:
         sock.close()
 
-    #print "Received: {}".format(received)
-
-
-
-if __name__ == "__main__":
-    main()
 
 
 
