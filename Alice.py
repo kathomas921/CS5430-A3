@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='parser test')
     parser.add_argument('-p', '--port', help="port number of receiving host", dest='port', type=int, required=True)
     parser.add_argument('-a', '--address', help="hostname or IPV4 address of receiving host", dest='addr', type=str, required=True)
+    #parser.add_argument('-e', '--encryption', help="type of encryption", dest='enc', type=str, required=True)
 
     args = parser.parse_args()
     print args.addr
@@ -44,6 +45,8 @@ if __name__ == "__main__":
             message_str = json.dumps(message)
             sock.sendall(message_str + "\n")
             MSG_COUNT += 1
+        #     if msg == "":
+		      # break
 	print "Quitting"
             
     finally:
