@@ -8,6 +8,7 @@ def main():
     parser = argparse.ArgumentParser(description='parser test')
     parser.add_argument('-p', '--port', help="port number of receiving host", dest='port', type=int, required=True)
     parser.add_argument('-a', '--address', help="hostname or IPV4 address of receiving host", dest='addr', type=str, required=True)
+    #parser.add_argument('-e', '--encryption', help="type of encryption", dest='enc', type=str, required=True)
 
     args = parser.parse_args()
     print args.addr
@@ -27,8 +28,8 @@ def main():
         while True:
             msg = raw_input("Please input message here (empty string to quit): ")
             sock.sendall(msg.strip() + "\n")
-            if msg == "":
-		break
+        #     if msg == "":
+		      # break
 	print "Quitting"
             
     finally:

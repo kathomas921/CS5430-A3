@@ -21,7 +21,7 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         while data != "":
             data = self.rfile.readline().strip()
             try:
-		if data != "":
+		      if data != "":
 	                print "{} writes: ".format(peer) + data
 	                size = size + len(data)
             except socket.error: # Client went away, do not take that data into account
@@ -29,11 +29,8 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
 	print "Client disconnected."
 
 if __name__ == "__main__":
-	# KT: how do we get the desired host/port?
-    # HOST, PORT = "localhost", 9999
-
     # Create the server, binding to localhost on port 9999
-    server = SocketServer.TCPServer(('localhost', 9997), MyTCPHandler)
+    server = SocketServer.TCPServer(('localhost', 9994), MyTCPHandler)
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
