@@ -1,74 +1,73 @@
 Prepare a rationale document explaining the use of cryptography in your system. Include protocol narrations annotated with citations into your code to explain to the grader where to look for implementation of each step. Defend your choices of key lengths and algorithms.
 
+    WHY USE ENCRYPTION AT ALL
+        Mallory is a threat that can read, modify, and delete messages (compromising both confidentiality and integrity of messages in the system) so we use encryption as a counter measure to ensure confidentiality and message signing as a counter measure to ensure integrity. 
 
-	WHY USE ENCRYPTION AT ALL
-		Mallory is a threat that can read, modify, and delete messages (compromising both confidentiality and integrity and availability of the messages in the system) so we use encryption as a counter measure to secure the system.
+        Specifically, through a combination of signing and encryption, we would messages to be secret and would like Bob to be able to detect when Mallory:
+            a) Modifies a message in transit in any way. This includes not only the contents of the message, but also the message number.
+            b) Replays a previous message.
+            c) Dropped a previous message before this one.
 
-	IMPORTANT PRINCIPLES
-		Following Kerckhoff's Principle, the secrecy of the messages from Alice to Bob are dependent on Mallory not knowing the appropriate key. It doesn't matter if Mallory knows Bob and Alice are utilizing RSA for key exchange or AES for message exchange, she still can't know the symmetric key without knowing Bob's private key.
+    ENCRYPTION LIBRARY
+        PyCrypto is a common python encryption library that implements RSA and AES procedures (as well as methods to sign messages encrypted with either) with an easy to use API. This ensured that we had easy access to reliable algorithms with the confidence that they are well implemented. For this project, we wrapped necessary PyCrypto primitives using three classes--AsymmetricIMCrypto, SymmetricIMCrypto, and SymmetricIMSigner--all implemented in IMCrypt.py.
 
-	ENCRYPTION LIBRARY
-		PyCrypto is a common python encryption library that implements RSA and AES procedures with an easy to use API. This ensured that we had easy access to reliable algorithms with the confidence that they are well implemented.
+    ASYMMETRIC ENCRYPTION USED
+        Employing the principle of open design, we used RSA with OAEP padding for public/private key encryption/decryption. It is widely implemented, well understood, and still secure. RSA with a 1024 bit key has been attacked in the past (http://www.techworld.com/news/security/rsa-1024-bit-private-key-encryption-cracked-3214360/) and is generally considered to not be secure anymore.  We decided to use a 2048 as opposed to 4096 bit key mostly for performance reasons.
 
-	OBJECT ORIENTED APPROACH:
-		We created classes for asymmetric and symmetric encryption for modulaity and adaptability.
+    SYMMETRIC ENCRYPTION USED
+        Again with the principle of open design, we chose to use AES encryption with CFB block cipher mode, as recommended by PyCrypto documentation. Specifically we chose AES-128 (key size of 16) based on the NIST standards suggesting that it was safe beyond the year 2030. I would be surprised if our system was in use past that, so even though AES 192 or 256 are MORE secure, it hardly seems worth the increased computing resource requirement.
 
-		All public private key schemes should be able en/decrypt as well as sign/verify
+    MESSAGE FORMAT
+        To send messages with metadata--such as a message number, timestamp, signature etc--we create a Python dictionary containing entries for the message and the metadata and then convert this to a JSON string, which is then sent to and unpacked by Bob. For example, for the symmetric key transport message below, we need to send Enc(A,kAB; K_B), a timestamp tA, B, a message number #, and a signature for all of the above We first build a dictionary containing the encrypted key and its metadata:
 
-		For symmetric keys, user had to specify whether it was also MACed or not so there is a separate class for MAC'ing vs encryption
+        m1 = {message: Enc(A,kAB; K_B), 'message_number': #, 'recipient': B, 'timestamp': tA}. 
 
-	WHY WE USE A HYBRID SCHEME
-		We used a combination of public/private keys as well as a shared symmetric key for a balance of security and performance measures. Alice used Bob's public key to encrypt a message containing the symmetric key. This is a very secure way to share a key, however encrypting and decrypting using RSA is very expensive, so after a symmetric key is securely shared, Alice begins using the symmetric key to encrypt her messages, knowing that Bob can use the same key to decrypt them quickly.
+        After converting this to a string s_m1 using JSON, we then sign s_m1:
 
+        m2 = {message: s_m1, signature: Sign(s_m1; k_A)}
 
-			
-		Since Bob never sends any messages back, we did not have to establish another symmetric key for Bob->Alice communication (symmetric keys should be unidirectional)
+        We can then convert this to s_m2 using JSON and send s_m2 to Bob.
 
-	ASYMMETRIC ENCRYPTION - RSA
-		Employing the principle of open design, we used RSA for public/private key encryption/decryption. It is widely implemented, well understood, and still secure. RSA with a 1024 bit key has been cracked (http://www.techworld.com/news/security/rsa-1024-bit-private-key-encryption-cracked-3214360/) and is generally considered to not be secure anymore.  We decided to use a 2048 as opposed to 4096 bit key mostly for performance reasons as the time for encryption/decription is proportional to the key length.
+    MESSAGE SIGNING
+        With the exception of the symmetric encryption key and the symmetric message signing key itself, messages are signed using HMACs built on the SHA-2 256-bit cryptographic hashing function. 
 
-	SYMMETRIC ENCRYPTION
-		Again with the principle of open design, we chose to use AES. Specifically we chose AES-128 (key size of 16) based on the NIST standards suggesting that it was safe beyond the year 2030. I would be surprised if our system was in use past that, so even though AES 192 or 256 are MORE secure, it hardly seems worth the increased computing power.
-	
+    SYMMETRIC KEY TRANSPORT FOR HYBRID ENCRYPTION
+        In order for Alice to send Bob messages confidentially, we choose to use a hybrid encryption scheme whereby a symmetric key is first securely (using an asymmetric encryption scheme) sent to Bob, and this symmetric key is then used for future communication this session. 
 
-	KEY TRANSPORT PROTOCOL (Asymmetric Keys)
-		A generates a symmetric key, k_s
-		A encrypts k_s as msg with B's public key
-		A sends msg to B
-		B decrypts msg with B's private key to get k_s
-		A and B communicate with k_s from now on (Secure way to share a symmetric key)
-		
+        Note that in this IM application, we define a "session" as expiring when Alice disconnects to Bob. Thus, each time Alice connects to Bob, a new symmetric key must be sent. However, this can easily be extended to time-based sessions by requiring Alice to reconnect to Bob (thus refreshing both the keys and the message numbers) periodically.
 
-	MESSAGE TRANSPORT PROTOCOL
-		Now that Bob and Alice both know the symmetric key (and Mallory does not), Alice can use AES to securely transmit messages to Bob even if Mallory is listening.
+        To send the symmetric key to Bob, we use the ISO/IEC 11770-3 Key Transport Mechanism 2 as required by the assignment In this, when Alice is first started, before prompting the user for messages to send, Alice immediately sends the message (# is a message number):
+        1. A-> B: #, B, tA, Enc(A,kAB; K_B), Sign(#, B, tA, Enc(A,KAB,K_B); k_A)
 
-		AES Symmetric Key Encryption
-			A encrypts message with k_s
-			A sends message to B
-			B decrypts with k_s
+        Note that we have mildly modified the transport mechanism to include a message number. This allows us to ensure this message is not replayed, but also ensures, for example, that Mallory does not send the encryption key as the signing key (which is sent next is message signatures are to be used).
 
-		We chose to define a "session" as however many messages Alice chooses to send before disconnecting (which she can do with an empty msg).
+        This step is implemented in Alice.py on lines 46-51. Enc() and Sign() are implemented by first instantiating an AsymmetricIMCrypto object using Bob's public key and Alice's private key, and then calling encrypt() and sign() respectively. 
 
-	MAC TAGS
-		We implement an option to use MACs to insure that the integrity of the messages has not been compromised through Mallory's possible altereration the encrypted messages.
+    SYMMETRIC KEY TRANSPORT FOR MESSAGE SIGNING
+        If message signing is enabled, we use the above protocol to also send a separate key that is used for signing messages.
 
-	CONFIGURATION
-		Given that Bob never sends any confirmation message back to Alice, Bob must know what encryption configuration to expect upon start up. Therefore, Bob and Alice must be started with the same set of encryption (-e) and signature (-s) flags.
+    MESSAGE TRANSPORT PROTOCOL
+        Now that Bob and Alice both know the symmetric key (and Mallory does not), Alice can use AES to securely transmit messages to Bob even if Mallory is listening.
 
-		Consider the following if Bob didn't know what to expect: 
-		Alice starts with the -e and -s flags. 
-		She tries to send Bob the following message containing a symmetric key.
-			B, tA, Enc(A,kAB; K_B), Sign(B, tA, Enc(A,kAB; K_B); k_A)
-		Mallory, who has intercepted this message en route to Bob, decides to drop the Sign(B, tA, Enc(A,kAB; K_B); k_A) component before forwarding it to Bob. When Bob receives the altered message, he has no way to verify that the message truly originated from Alice. Mallory could also alter the encrypted portion of the message, thus leaving Bob with a nonsensical decrypted message. Therefore, Bob should know whether or not to expect a signed component in the message from Alice. Since the scope of the situation does not imply that Bob ever sends messages back to Alice, we have decided to enforce this requirement manually through the command line launch of Alice and Bob.
+        AES Symmetric Key Encryption
+            A -> B: #, c = Enc(m;kmAB)
+            B: Dec(c; kmAB)
 
-		Conversely, 
+        Thus, a JSON message may look like:
 
-		She sends her message, which is both encrypted and signed to Mallory (who snuck in the middle on their conversation). Mallory modifies the message as to drop the signed component.
+        A -> B: M='{"message": Enc(m,kmAB), "message_number": #}'
+        If messages should be signed, A further uses a second HMAC key ksAB to sign the message:
+            A -> B: #, c = Enc(m;kmAB), Sign(#, c; ksAB)
 
-	
+        In our case, A signs the entire above entire JSON string (ensuring the integrity of the message number as well as of the message):
+        A -> B: '{"message": M, signature: Sign(M,ksAB)}'
 
+        These messages are constructed on lines 67-79 and sent on line 83.
 
+    CONFIGURATION/GENERAL DETAILS
+        Given that Bob can never send any confirmation message back to Alice (as the assignment does not allow for communication in the reverse direction), Bob should know what encryption configuration to expect upon start up. For example, if Alice wants to send signed unencrypted messages to Bob, Mallory can simply drop any message indicating this (such as a signing key), as well as signatures from subsequent messages (updating the message numbers appropriately to account for dropped messages). Therefore, Bob and Alice are started with the same set of encryption (-e) and signature (-s) flags, as Bob should know a priori whether to expect encryption and/or message signing.
 
+        In our implementation, we decided that, if Bob should detect a problem with any message, that message should not be displayed. This is because if Bob were a program intending to use messages from Alice in an automated way, it would not be sensible to use obviously tampered-with messages as though they were not.
 
 
 
