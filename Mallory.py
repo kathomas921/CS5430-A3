@@ -80,8 +80,8 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
             #     x = 1
 
             # if not use_encryption:
-            #     json_data = json.loads(data)
-            #     msg_num = str(json_data['message_number'])
+            json_data = json.loads(data)
+            msg_num = str(json_data['message_number'])
 
             print "Incoming message..."
             print data

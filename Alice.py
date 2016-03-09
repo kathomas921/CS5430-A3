@@ -12,7 +12,7 @@ from IMCrypt import AsymmetricIMCrypto, SymmetricIMCrypto, SymmetricIMSigner
 def generate_signed_key_string(plaintext_key, asymcrypt, message_number):
     key_exchange_message = {'message_number': message_number, 'message_type': 'key_exchange', 'recipient': 'Bob', 'key': asymcrypt.encrypt(plaintext_key), 'timestamp': time.time()}
     key_exchange_str = json.dumps(key_exchange_message)
-    signed_message = {'message': key_exchange_str, 'signature': asymcrypt.sign(key_exchange_str)}
+    signed_message = {'message_number': message_number, 'message': key_exchange_str, 'signature': asymcrypt.sign(key_exchange_str)}
     return json.dumps(signed_message)
 
 def signal_handler(signal,frame):
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
             if args.sign:
                 signature = SymSigner.sign(message1_str)
-                message = {'message': message1_str, 'signature': signature}
+                message = {'message_number': MSG_COUNT, 'message': message1_str, 'signature': signature}
             else:
                 message = message1
 
