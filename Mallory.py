@@ -7,7 +7,7 @@ from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 from Flush import FlushInput
-
+from termcolor import colored
 recipient_addr = ""
 recipient_port = -1
 use_encryption = False
@@ -82,8 +82,8 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
             # if not use_encryption:
             json_data = json.loads(data)
             msg_num = str(json_data['message_number'])
-
-            print "Incoming message..."
+            print "\n"
+            print colored("Incoming message...",'green')
             print data
             try:
                 command = "bad"
@@ -92,16 +92,16 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
                     command = raw_input("Would you like to forward (f), modify (m) or drop (d) the message? ")
                     print "Command: " + command
                     if command == "f":
-                        print "Forwarded as is to Bob"
+                        print colored("Forwarded as is to Bob",'green')
                         sock.sendall(data.strip() + "\n")
                        
                     elif command == "d":
-                        print "Dropped message"
+                        print colored("Dropped message",'green')
                         data = " "
                       
                     elif command == "m":
                         #prompt user to enter new input msg
-                        print "orig data: " + data
+                        print colored("orig data: ",'green') + data
                         resp = "n"
                         while resp != "y":
                             data = raw_input("Please enter modified message or select replay message by message number: ")
@@ -112,18 +112,17 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
 
                             #Check if user wants replay message
                             if data[0].isdigit():
-                                print "User entered a number...searching replay messages"
                                 if data[0] in old_messages.keys():
                                     data[0] = old_messages[data[0]]
                                     data[0] = json.dumps(data[0])
                                 else:
-                                    print "Msg number not in stored messages, please try again."
+                                    print colored("Msg number not in stored messages, please try again.",'red')
                                     continue
                             print data[0]
                             resp = raw_input("Is this the message you want to forward? (y/n): ")
                             flush.flush_input()
                             if resp == "y":
-                                print "Forwarding new message to Bob." 
+                                print colored("Forwarding new message to Bob.", 'green')
 
 
                         sock.sendall(data[0].strip() + "\n")

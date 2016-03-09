@@ -3,6 +3,7 @@ import socket
 import SocketServer
 import json
 import argparse
+from termcolor import colored
 from IMCrypt import AsymmetricIMCrypto, SymmetricIMCrypto, SymmetricIMSigner
 from message_handling import getErrorForCode, handleMessage, handle_signed_key_string
 
@@ -24,14 +25,14 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         global BobAsym
         data = "DUMMY"
         peer = self.client_address[0]
-        print "Client connected {}".format(peer)
+        print colored("Client connected {}".format(peer),'green')
         expectedMsgNum = 0
         if use_encryption:
             data = self.rfile.readline().strip()
             symmetric_key = handle_signed_key_string(data,BobAsym,expectedMsgNum) 
             if type(symmetric_key) == type(1):
-                print "Critical error while receiving symmetric key."
-                print getErrorForCode(symmetric_key)
+                print colored("Critical error while receiving symmetric key.",'red')
+                print colored(getErrorForCode(symmetric_key),'red')
                 return;
             SymCrypt = SymmetricIMCrypto(symmetric_key)
             expectedMsgNum += 1 
@@ -42,8 +43,8 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
             data = self.rfile.readline().strip()
             hmac_key = handle_signed_key_string(data,BobAsym,expectedMsgNum) 
             if type(hmac_key) == type(1):
-                print "Critical error while receiving hmac key."
-                print getErrorForCode(hmac_key)
+                print colored("Critical error while receiving hmac key.",'red')
+                print colored(getErrorForCode(hmac_key),'red')
                 return;
             SymSigner = SymmetricIMSigner(hmac_key) 
             expectedMsgNum += 1
@@ -52,15 +53,15 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
 
         while data != "":
             data = self.rfile.readline().strip()
-            print "RAW: " + data
+#            print "RAW: " + data
             try:
 		if data != "":
                     message = handleMessage(data,SymCrypt,SymSigner,expectedMsgNum)
                     if type(message) == type(1):
                         err = getErrorForCode(message)
-                        print err
+                        print colored(err,'red')
                     else:  
-	                print "{} writes: ".format(peer) + str(message['message_number']) + ". " + message['message']
+	                print colored("{} writes: ".format(peer),'green') + str(message['message_number']) + ". " + message['message']
             except socket.error: # Client went away, do not take that data into account
                 data = ""
             expectedMsgNum += 1
