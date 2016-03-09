@@ -1,0 +1,80 @@
+Prepare a rationale document explaining the use of cryptography in your system. Include protocol narrations annotated with citations into your code to explain to the grader where to look for implementation of each step. Defend your choices of key lengths and algorithms.
+
+
+	WHY USE ENCRYPTION AT ALL
+		Mallory is a threat that can read, modify, and delete messages (compromising both confidentiality and integrity and availability of the messages in the system) so we use encryption as a counter measure to secure the system.
+
+	IMPORTANT PRINCIPLES
+		Following Kerckhoff's Principle, the secrecy of the messages from Alice to Bob are dependent on Mallory not knowing the appropriate key. It doesn't matter if Mallory knows Bob and Alice are utilizing RSA for key exchange or AES for message exchange, she still can't know the symmetric key without knowing Bob's private key.
+
+	ENCRYPTION LIBRARY
+		PyCrypto is a common python encryption library that implements RSA and AES procedures with an easy to use API. This ensured that we had easy access to reliable algorithms with the confidence that they are well implemented.
+
+	OBJECT ORIENTED APPROACH:
+		We created classes for asymmetric and symmetric encryption for modulaity and adaptability.
+
+		All public private key schemes should be able en/decrypt as well as sign/verify
+
+		For symmetric keys, user had to specify whether it was also MACed or not so there is a separate class for MAC'ing vs encryption
+
+	WHY WE USE A HYBRID SCHEME
+		We used a combination of public/private keys as well as a shared symmetric key for a balance of security and performance measures. Alice used Bob's public key to encrypt a message containing the symmetric key. This is a very secure way to share a key, however encrypting and decrypting using RSA is very expensive, so after a symmetric key is securely shared, Alice begins using the symmetric key to encrypt her messages, knowing that Bob can use the same key to decrypt them quickly.
+
+
+			
+		Since Bob never sends any messages back, we did not have to establish another symmetric key for Bob->Alice communication (symmetric keys should be unidirectional)
+
+	ASYMMETRIC ENCRYPTION - RSA
+		Employing the principle of open design, we used RSA for public/private key encryption/decryption. It is widely implemented, well understood, and still secure. RSA with a 1024 bit key has been cracked (http://www.techworld.com/news/security/rsa-1024-bit-private-key-encryption-cracked-3214360/) and is generally considered to not be secure anymore.  We decided to use a 2048 as opposed to 4096 bit key mostly for performance reasons as the time for encryption/decription is proportional to the key length.
+
+	SYMMETRIC ENCRYPTION
+		Again with the principle of open design, we chose to use AES. Specifically we chose AES-128 (key size of 16) based on the NIST standards suggesting that it was safe beyond the year 2030. I would be surprised if our system was in use past that, so even though AES 192 or 256 are MORE secure, it hardly seems worth the increased computing power.
+	
+
+	KEY TRANSPORT PROTOCOL (Asymmetric Keys)
+		A generates a symmetric key, k_s
+		A encrypts k_s as msg with B's public key
+		A sends msg to B
+		B decrypts msg with B's private key to get k_s
+		A and B communicate with k_s from now on (Secure way to share a symmetric key)
+		
+
+	MESSAGE TRANSPORT PROTOCOL
+		Now that Bob and Alice both know the symmetric key (and Mallory does not), Alice can use AES to securely transmit messages to Bob even if Mallory is listening.
+
+		AES Symmetric Key Encryption
+			A encrypts message with k_s
+			A sends message to B
+			B decrypts with k_s
+
+		We chose to define a "session" as however many messages Alice chooses to send before disconnecting (which she can do with an empty msg).
+
+	MAC TAGS
+		We implement an option to use MACs to insure that the integrity of the messages has not been compromised through Mallory's possible altereration the encrypted messages.
+
+	CONFIGURATION
+		Given that Bob never sends any confirmation message back to Alice, Bob must know what encryption configuration to expect upon start up. Therefore, Bob and Alice must be started with the same set of encryption (-e) and signature (-s) flags.
+
+		Consider the following if Bob didn't know what to expect: 
+		Alice starts with the -e and -s flags. 
+		She tries to send Bob the following message containing a symmetric key.
+			B, tA, Enc(A,kAB; K_B), Sign(B, tA, Enc(A,kAB; K_B); k_A)
+		Mallory, who has intercepted this message en route to Bob, decides to drop the Sign(B, tA, Enc(A,kAB; K_B); k_A) component before forwarding it to Bob. When Bob receives the altered message, he has no way to verify that the message truly originated from Alice. Mallory could also alter the encrypted portion of the message, thus leaving Bob with a nonsensical decrypted message. Therefore, Bob should know whether or not to expect a signed component in the message from Alice. Since the scope of the situation does not imply that Bob ever sends messages back to Alice, we have decided to enforce this requirement manually through the command line launch of Alice and Bob.
+
+		Conversely, 
+
+		She sends her message, which is both encrypted and signed to Mallory (who snuck in the middle on their conversation). Mallory modifies the message as to drop the signed component.
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
