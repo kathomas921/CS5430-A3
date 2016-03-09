@@ -62,11 +62,12 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         print "Client connected {}", format(peer)
         while data != "":
             data = self.rfile.readline().strip()
+            print "Incoming message..."
+            print data
             try:
                 #command = "bad"
                 #while True:
                 command = raw_input("Would you like to forward (f), modify (m) or drop (d) the message? ")
-                print command
                 if command == "f":
                     print "forwarded as is to Bob"
                     sock.sendall(data.strip() + "\n")
@@ -98,17 +99,21 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
         
 
 def main():
+    global recipient_addr
+    global recipient_port
     #parse args
     parser = argparse.ArgumentParser(description='parser test')
-    parser.add_argument('-p', '--port', help="port number of receiving host", dest='port', type=int, required=True)
-    parser.add_argument('-a', '--address', help="hostname or IPV4 address of receiving host", dest='addr', type=str, required=True)
+    parser.add_argument('-cp', '--client-port', help="port number of receiving host", dest='cport', type=int, required=True)
+    parser.add_argument('-ca', '--client-address', help="hostname or IPV4 address of receiving host", dest='caddr', type=str, required=True)
+    parser.add_argument('-sp', '--server-port', help="port number of receiving host", dest='sport', type=int, required=True)
+    parser.add_argument('-sa', '--server-address', help="hostname or IPV4 address of receiving host", dest='saddr', type=str, required=True)
     #parser.add_argument('-e', '--encryption', help="type of encryption", dest='enc', type=str, required=True)
     #parser.add_argument('-l', '--location', help="location of keys", dest='keyloc', type=str)
 
     args = parser.parse_args()
 
-    recipient_addr = args.addr
-    recipient_port = args.port
+    recipient_addr = args.caddr
+    recipient_port = args.cport
 
 
 
@@ -119,7 +124,7 @@ def main():
     ###
     # CREATE SERVER SOCKET TO LISTEN TO ALICE
     ###
-    server = SocketServer.TCPServer(('localhost', 8884), MyTCPHandler)
+    server = SocketServer.TCPServer((args.saddr,args.sport), MyTCPHandler)
     server.serve_forever()
 
     sock.close()

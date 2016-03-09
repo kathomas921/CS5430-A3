@@ -6,8 +6,9 @@ import signal
 from Message import Message
 import Crypto.Random.random as cryptrand
 import time
-def generate_signed_key_string(plaintext_key, asymcrypt):
-    key_exchange_message = {'message_type': 'key_exchange', 'recipient': 'Bob', 'symmetric_key': asymcrypt.encrypt(plaintext_key), 'timestamp': time.time()}
+from IMCrypt import AsymmetricIMCrypto, SymmetricIMCrypto, SymmetricIMSigner
+def generate_signed_key_string(plaintext_key, asymcrypt, message_number):
+    key_exchange_message = {'message_number': message_number, 'message_type': 'key_exchange', 'recipient': 'Bob', 'key': asymcrypt.encrypt(plaintext_key), 'timestamp': time.time()}
     key_exchange_str = json.dumps(key_exchange_message)
     signed_message = {'message': key_exchange_str, 'signature': asymcrypt.sign(key_exchange_str)}
     return json.dumps(signed_message)
@@ -30,30 +31,55 @@ if __name__ == "__main__":
 
     AliceAsym = AsymmetricIMCrypto('Keys/Public/Bob_public_key.txt','Keys/Alice_private_key.txt')
     
-    symmetric_key = str(bytearray([cryptrand.getrandbits(8) for i in xrange(0,16)]))    
-    hmac_key = str(bytearray([cryptrand.getrandbits(8) for i in xrange(0,16)]))
-    SymCrypt = SymmetricIMCrypto(symmetric_key)
-    SymSigner = SymmetricIMSigner(hmac_key) 
      
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     signal.signal(signal.SIGINT, signal_handler)
 
-    if args.enc:
-        msg = generate_signed_key_string(
-
     MSG_COUNT = 0
+
+    
+
+
     try:
         sock.connect((args.addr, args.port))
-                
+     
+        if args.enc: 
+            symmetric_key = str(bytearray([cryptrand.getrandbits(8) for i in xrange(0,16)]))    
+            SymCrypt = SymmetricIMCrypto(symmetric_key)
+            symkey_message = generate_signed_key_string(symmetric_key,AliceAsym,MSG_COUNT)
+            sock.sendall(symkey_message + "\n")
+            MSG_COUNT += 1
+
+        if args.sign:
+            hmac_key = str(bytearray([cryptrand.getrandbits(8) for i in xrange(0,16)]))
+            SymSigner = SymmetricIMSigner(hmac_key) 
+            hmackey_message = generate_signed_key_string(hmac_key,AliceAsym,MSG_COUNT)
+            sock.sendall(hmackey_message + "\n")
+            MSG_COUNT += 1  
 
         while True:
             msg = raw_input("Message (empty string to quit): ")
             if msg == "":
                 sock.sendall(msg + "\n")
 		break
-            msgn = MSG_COUNT + 1
-            message = {'message_number': msgn, 'message': msg.strip()}
+            msg = msg.strip()
+
+            if args.enc:
+                msg = SymCrypt.encrypt(msg)
+                message1 = {'message_type': 'encrypted_message', 'message_number': MSG_COUNT, 'message': msg}
+            else:
+                message1 = {'message_type': 'plaintext_message', 'message_number': MSG_COUNT, 'message': msg}
+
+            message1_str = json.dumps(message1)
+
+            if args.sign:
+                signature = SymSigner.sign(message1_str)
+                message = {'message': message1_str, 'signature': signature}
+            else:
+                message = message1
+
             message_str = json.dumps(message)
+ 
             sock.sendall(message_str + "\n")
             MSG_COUNT += 1
         #     if msg == "":
