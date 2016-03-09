@@ -81,15 +81,22 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
                     elif command == "m":
                         #prompt user to enter new input msg
                         print "orig data: " + data
-                        data = raw_input("Please enter modified message: ")
-                        print "Forwarding new message to Bob: " + data
+                        resp = "n"
+                        while resp != "y":
+                            data = raw_input("Please enter modified message: ")
+                            data = data.splitlines()
+                            flush = FlushInput()
+                            flush.flush_input()
+                            resp = raw_input("Is this the message you want to forward? (y/n) " + data[0])
+                            flush.flush_input()
+                            if resp == "y":
+                                print "Forwarding new message to Bob: " + data[0]
+
 
                         # print "Forwarded modified msg to Bob"
-                        sock.sendall(data.strip() + "\n")
+                        sock.sendall(data[0].strip() + "\n")
                         #break
 
-                        flush = FlushInput()
-                        flush.flush_input()
                     else:
                         print "Please choose an appropriate option."
 
