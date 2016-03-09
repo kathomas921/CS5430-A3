@@ -5,7 +5,7 @@ import argparse
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
-import cPickle
+from Flush import FlushInput
 
 recipient_addr = ""
 recipient_port = -1
@@ -65,28 +65,38 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
             print "Incoming message..."
             print data
             try:
-                #command = "bad"
+                command = "bad"
                 #while True:
-                command = raw_input("Would you like to forward (f), modify (m) or drop (d) the message? ")
-                if command == "f":
-                    print "forwarded as is to Bob"
-                    sock.sendall(data.strip() + "\n")
-                    #break
-                if command == "d":
-                    print "Dropped msg"
-                    data = " "
-                    #break
-                if command == "m":
-                    #prompt user to enter new input msg
-                    print "orig data: " + data
-                    data = raw_input("Please enter modified message: ")
-                    print "new data: " + data
-                    # print "Forwarded modified msg to Bob"
-                    sock.sendall(data.strip() + "\n")
-                    #break
+                while command != "f" and command != "d" and command != "m":
+                    command = raw_input("Would you like to forward (f), modify (m) or drop (d) the message? ")
+                    print "Command: " + command
+                    if command == "f":
+                        print "Forwarded as is to Bob"
+                        sock.sendall(data.strip() + "\n")
+                        #break
+                    elif command == "d":
+                        print "Dropped msg"
+                        data = " "
+                        #break
+                    elif command == "m":
+                        #prompt user to enter new input msg
+                        print "orig data: " + data
+                        data = raw_input("Please enter modified message: ")
+                        print "Forwarding new message to Bob: " + data
+
+                        # print "Forwarded modified msg to Bob"
+                        sock.sendall(data.strip() + "\n")
+                        #break
+
+                        flush = FlushInput()
+                        flush.flush_input()
+                    else:
+                        print "Please choose an appropriate option."
+
 
 
             except socket.error:
+                print "-------socket exception error"
                 data = ""
         print("closing socket with Alice")
         sock.close()

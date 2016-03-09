@@ -13,7 +13,7 @@ SIGNATURE_MISSING_ERROR = -7
 
 def getErrorForCode(code):
     if code == JSON_PARSE_ERROR:
-        return "JSON PARSE ERROR"
+        return "Malformed JSON - suspected tampering"
     elif code == MSG_WRONG_TYPES_ERROR:
         return "MSG WRONG TYPE"
     elif code == MSG_BAD_KEYS_ERROR:
@@ -25,7 +25,7 @@ def getErrorForCode(code):
     elif code == INVALID_RECIPIENT_ERROR:
         return "RECIPIENT"
     elif code == OLD_TIMESTAMP_ERROR:
-        return "TIMESTAMP"
+        return "Message took too long in transit - suspected tampering."
 
 
 def handleMessage(data,SymCrypt,SymSigner):

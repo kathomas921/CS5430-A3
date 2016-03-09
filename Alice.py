@@ -3,7 +3,7 @@ import sys
 import argparse
 import json
 import signal
-from Message import Message
+# from Message import Message
 import Crypto.Random.random as cryptrand
 import time
 from IMCrypt import AsymmetricIMCrypto, SymmetricIMCrypto, SymmetricIMSigner
