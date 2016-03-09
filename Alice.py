@@ -7,6 +7,8 @@ import signal
 import Crypto.Random.random as cryptrand
 import time
 from IMCrypt import AsymmetricIMCrypto, SymmetricIMCrypto, SymmetricIMSigner
+
+
 def generate_signed_key_string(plaintext_key, asymcrypt, message_number):
     key_exchange_message = {'message_number': message_number, 'message_type': 'key_exchange', 'recipient': 'Bob', 'key': asymcrypt.encrypt(plaintext_key), 'timestamp': time.time()}
     key_exchange_str = json.dumps(key_exchange_message)
@@ -38,8 +40,6 @@ if __name__ == "__main__":
     MSG_COUNT = 0
 
     
-
-
     try:
         sock.connect((args.addr, args.port))
      
@@ -82,35 +82,8 @@ if __name__ == "__main__":
  
             sock.sendall(message_str + "\n")
             MSG_COUNT += 1
-        #     if msg == "":
-		      # break
+
 	print "Quitting"
             
     finally:
         sock.close()
-
-
-
-
-# def Alice:
-#   try:
-#       s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#   except socket.error:
-#       print 'Alice failed to create socket'
-#       sys.exit()
-#   print 'Alice created a socket'
-    
-#   # How does Alice know mallory's ip/port?
-#   s.connect("mallory's hostname", "mallory's port")
-#   print "Alice connected to mallory's ip on port " + port
-
-#   while True:
-#       # Repeatedly prompts user to string
-#       response = raw_input("Please input message: ")
-#       try:
-#           print 'Alice is sending the user input to Mallory'
-#           s.sendall(response)
-#       except socket.error:
-#           print 'Send failed'
-#           sys.exit()
-#       print 'Sucessfully sent user input to Mallory'

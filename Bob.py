@@ -52,7 +52,7 @@ class MyTCPHandler(SocketServer.StreamRequestHandler):
             data = self.rfile.readline().strip()
             print "RAW: " + data
             try:
-		if data != "":
+		        if data != "":
                     message = handleMessage(data,SymCrypt,SymSigner)
                     if type(message) == type(1):
                         err = getErrorForCode(message)

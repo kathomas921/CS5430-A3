@@ -15,7 +15,7 @@ def getErrorForCode(code):
     if code == JSON_PARSE_ERROR:
         return "Malformed JSON - suspected tampering"
     elif code == MSG_WRONG_TYPES_ERROR:
-        return "MSG WRONG TYPE"
+        return "Message or message_number missing - suspected tampering"
     elif code == MSG_BAD_KEYS_ERROR:
         return "MSG BAD KEYS"
     elif code == SIGNATURE_INVALID_ERROR:
