@@ -1,9 +1,9 @@
 Prepare a rationale document explaining the use of cryptography in your system. Include protocol narrations annotated with citations into your code to explain to the grader where to look for implementation of each step. Defend your choices of key lengths and algorithms.
 
     WHY USE ENCRYPTION AT ALL
-        Mallory is a threat that can read, modify, and delete messages (compromising both confidentiality and integrity of messages in the system) so we use encryption as a counter measure to ensure confidentiality and message signing as a counter measure to ensure integrity. 
+        Mallory is a threat that can read, modify, and delete messages (compromising both confidentiality and integrity of messages in the system) so we use encryption as a countermeasure to ensure confidentiality and message signing as a countermeasure to ensure integrity. 
 
-        Specifically, through a combination of signing and encryption, we would messages to be secret and would like Bob to be able to detect when Mallory:
+        Specifically, through a combination of signing and encryption, we would like messages to be secret and would like Bob to be able to detect when Mallory:
             a) Modifies a message in transit in any way. This includes not only the contents of the message, but also the message number.
             b) Replays a previous message.
             c) Dropped a previous message before this one.
@@ -34,7 +34,7 @@ Prepare a rationale document explaining the use of cryptography in your system. 
     SYMMETRIC KEY TRANSPORT FOR HYBRID ENCRYPTION
         In order for Alice to send Bob messages confidentially, we choose to use a hybrid encryption scheme whereby a symmetric key is first securely (using an asymmetric encryption scheme) sent to Bob, and this symmetric key is then used for future communication this session. 
 
-        Note that in this IM application, we define a "session" as expiring when Alice disconnects to Bob. Thus, each time Alice connects to Bob, a new symmetric key must be sent. However, this can easily be extended to time-based sessions by requiring Alice to reconnect to Bob (thus refreshing both the keys and the message numbers) periodically.
+        Note that in this IM application, we define a "session" as expiring when Alice disconnects from Bob. Thus, each time Alice connects to Bob, a new symmetric key must be sent. However, this can easily be extended to time-based sessions by requiring Alice to reconnect to Bob (thus refreshing both the keys and the message numbers) periodically.
 
         To send the symmetric key to Bob, we use the ISO/IEC 11770-3 Key Transport Mechanism 2 as required by the assignment In this, when Alice is first started, before prompting the user for messages to send, Alice immediately sends the message (# is a message number):
         1. A-> B: #, B, tA, Enc(A,kAB; K_B), Sign(#, B, tA, Enc(A,KAB,K_B); k_A)
